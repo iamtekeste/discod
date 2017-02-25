@@ -6,12 +6,13 @@ const fs = require('fs');
 const readline = require('readline');
 const execSync = require('child_process').execSync;
 const exec = require('child_process').exec;
+const chalk = require('chalk');
 
 let config = {
     'branchesTxtPath': `${process.env['HOME']}/.detective/branches.txt`,
     'branches': [],
     'currentBranch': '',
-    'searchTerm': 'noActiveFilters',
+    'searchTerm': 'awesome',
     'fileExtension': ''
 };
 
@@ -35,7 +36,7 @@ function doCheckup() {
 }
 
 function parseBranchesTxt() {
-    const rl = readline.createInterface({
+    let rl = readline.createInterface({
         input: fs.createReadStream(config.branchesTxtPath)
     });
 
@@ -46,7 +47,10 @@ function parseBranchesTxt() {
     });
 
     //call cb after the last line is read
-    rl.on('close', doGitFetch);
+    rl.on('close', () => {
+    	rl = null;
+    	doGitFetch();
+    });
 }
 
 function doGitFetch() {
@@ -66,23 +70,34 @@ function doGitCheckout() {
 	        config.currentBranch = config.branches[i];
 	        doSearch();
         } catch( e ) {
-        	console.log('Checkout Exception', e.message);
+        	console.log(chalk.bgRed('Checkout Exception', e.message.trim()));
+			console.log('=======================================================================================');
         }
 
     }
 }
 
 function doSearch() {
-	console.log(`Looking for '${config.searchTerm}' in branch ${config.currentBranch}`);
+	let formattedSearchTerm = chalk.bgBlue.black(config.searchTerm);
+	let formattedCurrentBranch = chalk.bgWhite.black(config.currentBranch);
+
+	console.log(`Searching for ${formattedSearchTerm} in branch ${formattedCurrentBranch}`);
 	try {
-		let searchResult = execSync(`ag --js ${config.searchTerm}`);
-		displaySearchResult(searchResult);
+		let searchResult = execSync(`ag ${config.searchTerm}`);
+		displaySearchResult(searchResult.toString());
 	} catch(e) {
-		console.log(`Could not find '${config.searchTerm}' in the branch ${config.currentBranch}`);
+		console.log(chalk.bgRed(`Could not find '${config.searchTerm}' in the branch ${config.currentBranch}`));
+		console.log('=======================================================================================');
 	}
 }
 
 function displaySearchResult(searchResult) {
-	
+	let lines = searchResult.trim().split("\n");
+	console.log(chalk.bgYellow.black('Search results'));
+	lines.forEach( line => {
+		let fileName = chalk.green.bold(line.split(":")[0]);
+		let lineNumber = chalk.yellow.bold(line.split(":")[1]);
+		console.log(`${fileName} : ${lineNumber}`);
+	});
 }
 init();
