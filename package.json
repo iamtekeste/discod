@@ -1,0 +1,19 @@
+{
+  "name": "detective",
+  "version": "1.0.0",
+  "description": "Searches through a list of git branches given a search term",
+  "main": "index.js",
+  "scripts": {
+    "test": "lol"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iamtekeste/detective.git"
+  },
+  "author": "Tekeste Kidanu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/iamtekeste/detective/issues"
+  },
+  "homepage": "https://github.com/iamtekeste/detective#readme"
+}
