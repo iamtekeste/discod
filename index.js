@@ -4,12 +4,15 @@
 
 const fs = require('fs');
 const readline = require('readline');
+const execSync = require('child_process').execSync;
 const exec = require('child_process').exec;
 
 let config = {
     'branchesTxtPath': `${process.env['HOME']}/.detective/branches.txt`,
     'branches': [],
-    'searchTerm': 'meh'
+    'currentBranch': '',
+    'searchTerm': 'noActiveFilters',
+    'fileExtension': ''
 };
 
 function init() {
@@ -18,11 +21,11 @@ function init() {
     if (goodToGo) {
         //parse branches.txt
         parseBranchesTxt();
-        //
     }
 }
 
 function doCheckup() {
+	//check that we have a searchterm in the config and does not contain a space
     //check that branches.txt exists & we have at least one branch in in it
     //check that they have supplied a searchTerm
     //check that it is a git repo
@@ -47,46 +50,39 @@ function parseBranchesTxt() {
 }
 
 function doGitFetch() {
-    let gitFetch = exec('git fetch', (error, stdout, stderr) => {
-
-        if (error && error.code !== 0) {
-        	console.log('Fetching failed with the following error')
-        	console.log(stderr);
-            return;
-        } else {
-            doGitCheckout();
-        }
-    });
+    try {
+    	execSync('git fetch');
+    	doGitCheckout();
+    } catch( e ) {
+    	console.log(e);
+    }
 }
 
 function doGitCheckout() {
-	let badShitHappened = false;
+
     for (let i = 0; i < config.branches.length; i++) {
-    	
-    	if(badShitHappened)  {
-    		break;
-    	}
-    	//do fancy loading animation
-        console.log(`checking out ${config.branches[i]}`);
+        try {
+	        let result = execSync(`git checkout ${config.branches[i]}`);
+	        config.currentBranch = config.branches[i];
+	        doSearch();
+        } catch( e ) {
+        	console.log('Checkout Exception', e.message);
+        }
 
-        exec(`git checkout ${config.branches[i]}`, (error, stdout, stderr) => {
-        	//turn off loading animation here
-
-            if (error && error.code !== 0) {
-            	console.log(stderr);
-                badShitHappened = true;
-            } else {
-            	//do search now
-                console.log('checkout was success!');
-                doSearch();
-            }
-        });
     }
 }
 
 function doSearch() {
-
+	console.log(`Looking for '${config.searchTerm}' in branch ${config.currentBranch}`);
+	try {
+		let searchResult = execSync(`ag --js ${config.searchTerm}`);
+		displaySearchResult(searchResult);
+	} catch(e) {
+		console.log(`Could not find '${config.searchTerm}' in the branch ${config.currentBranch}`);
+	}
 }
 
-
+function displaySearchResult(searchResult) {
+	
+}
 init();
