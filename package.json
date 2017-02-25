@@ -18,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/iamtekeste/detective/issues"
   },
-  "homepage": "https://github.com/iamtekeste/detective#readme"
+  "homepage": "https://github.com/iamtekeste/detective#readme",
+  "dependencies": {
+    "chalk": "^1.1.3"
+  }
 }
