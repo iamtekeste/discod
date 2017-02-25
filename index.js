@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const readline = require('readline');
+const spawn = require('child_process').spawn;
 
 let config = {
 	'branchesTxtPath': `${process.env['HOME']}/.detective/branches.txt`,
@@ -42,7 +43,17 @@ function parseBranchesTxt() {
 	//call cb after the last line is read
 	rl.on('close', doGitFetch);
 }
+
 function doGitFetch() {
+	let gitFetch = spawn('git', ['fetch'], {stdio: 'inherit'});
+	
+	process.stdout.on('data', data => {
+		console.log('fetching...')
+	});
+	process.stdout.on('close', doGitCheckout);
 }
 
+function doGitCheckout() {
+	
+}
 init();
