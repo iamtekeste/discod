@@ -12,12 +12,33 @@ let config = {
     'branchesTxtPath': `${process.env['HOME']}/.detective/branches.txt`,
     'branches': [],
     'currentBranch': '',
-    'searchTerm': 'awesome',
+    'searchTerm': '',
     'fileExtension': ''
 };
 
 function init() {
-    //do check up before running
+
+	let firstParam = process.argv[2];
+	let secondParam = process.argv[3];
+
+	if(firstParam === undefined) {
+		printHelp();
+		return;
+	} else {
+		if(firstParam === "--edit-list") {
+			editBranchesTxt();
+			return;
+		} else {
+			//it is a search term then
+			config.searchTerm = firstParam;
+		}
+	}
+
+	if(secondParam !== undefined) {
+		config.fileExtension = secondParam;
+	}
+
+    //If we are no ready for searching but first we have to do check up
     let goodToGo = doCheckup();
     if (goodToGo) {
         //parse branches.txt
@@ -26,6 +47,7 @@ function init() {
 }
 
 function doCheckup() {
+
 	//check that we have a searchterm in the config and does not contain a space
     //check that branches.txt exists & we have at least one branch in in it
     //check that they have supplied a searchTerm
@@ -33,6 +55,14 @@ function doCheckup() {
     //check that the repo is not dirty, if it is do a stash?
     //check that we have a remote setup
     return true;
+}
+
+function printHelp() {
+	console.log('usage: tk searchTerm [fileExtension]');
+}
+
+function editBranchesTxt() {
+	execSync(`open ${config.branchesTxtPath}`);
 }
 
 function parseBranchesTxt() {
@@ -83,17 +113,27 @@ function doSearch() {
 
 	console.log(`Searching for ${formattedSearchTerm} in branch ${formattedCurrentBranch}`);
 	try {
-		let searchResult = execSync(`ag ${config.searchTerm}`);
+		let searchCommand = `ag '${config.searchTerm}'`;
+		
+		if(config.fileExtension !== '') {
+			searchCommand = `ag --${config.fileExtension} '${config.searchTerm}'`;
+		}
+
+		console.log(searchCommand);
+		let searchResult = execSync(searchCommand);
+
 		displaySearchResult(searchResult.toString());
+
 	} catch(e) {
-		console.log(chalk.bgRed(`Could not find '${config.searchTerm}' in the branch ${config.currentBranch}`));
+		console.log(chalk.bgRed(`Could not find '${config.searchTerm}' in the branch ${config.currentBranch} within files of type ${config.fileExtension}`));
 		console.log('=======================================================================================');
 	}
 }
 
 function displaySearchResult(searchResult) {
+	console.log(chalk.bgYellow.black(`Search results found in branch ${config.currentBranch} within files of type ${config.fileExtension}`));
+
 	let lines = searchResult.trim().split("\n");
-	console.log(chalk.bgYellow.black('Search results'));
 	lines.forEach( line => {
 		let fileName = chalk.green.bold(line.split(":")[0]);
 		let lineNumber = chalk.yellow.bold(line.split(":")[1]);
