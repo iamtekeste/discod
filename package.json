@@ -1,6 +1,6 @@
 {
   "name": "discod",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Searches through a list of git branches given a search term",
   "main": "index.js",
   "scripts": {
