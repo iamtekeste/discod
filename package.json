@@ -7,7 +7,7 @@
     "test": "lol"
   },
   "bin": {
-    "tk": "./index.js"
+    "discod": "./index.js"
   },
   "repository": {
     "type": "git",
@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/iamtekeste/detective#readme",
   "dependencies": {
-    "chalk": "^1.1.3"
+    "chalk": "^1.1.3",
+    "mkdirp": "^0.5.1"
   }
 }
