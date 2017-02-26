@@ -134,10 +134,10 @@ function doSearch() {
 	let fileExtension = config.fileExtension;
 	console.log(`Searching for ${formattedSearchTerm} in branch ${formattedCurrentBranch}`);
 	try {
-		let searchCommand = `rg -F '${config.searchTerm}'`;
+		let searchCommand = `rg -Fn '${config.searchTerm}'`;
 		
 		if(config.fileExtension !== '') {
-			searchCommand = `rg -F --type-add '${fileExtension}:*.${fileExtension}'  -t${fileExtension} '${config.searchTerm}'`;
+			searchCommand = `rg -Fn --type-add '${fileExtension}:*.${fileExtension}'  -t${fileExtension} '${config.searchTerm}'`;
 		}
 
 		let searchResult = execSync(searchCommand);
