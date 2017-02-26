@@ -115,7 +115,7 @@ function doGitCheckout() {
 
     for (let i = 0; i < config.branches.length; i++) {
         try {
-        	console.log('Switching to branch', chalk.bgWhite.bold.black(config.branches[i]));
+        	// console.log('Switching to branch', chalk.bgWhite.bold.black(config.branches[i]));
 	        let result = execSync(`git checkout ${config.branches[i]}`, {stdio: ['ignore', 'ignore', 'ignore']});
 	        config.currentBranch = config.branches[i];
 	        doSearch();
@@ -131,13 +131,13 @@ function doGitCheckout() {
 function doSearch() {
 	let formattedSearchTerm = chalk.bgBlue.black.italic(config.searchTerm);
 	let formattedCurrentBranch = chalk.bgWhite.black(config.currentBranch);
-
+	let fileExtension = config.fileExtension;
 	console.log(`Searching for ${formattedSearchTerm} in branch ${formattedCurrentBranch}`);
 	try {
-		let searchCommand = `ag '${config.searchTerm}'`;
+		let searchCommand = `rg -F '${config.searchTerm}'`;
 		
 		if(config.fileExtension !== '') {
-			searchCommand = `ag --${config.fileExtension} '${config.searchTerm}'`;
+			searchCommand = `rg -F --type-add '${fileExtension}:*.${fileExtension}'  -t${fileExtension} '${config.searchTerm}'`;
 		}
 
 		let searchResult = execSync(searchCommand);
@@ -145,15 +145,22 @@ function doSearch() {
 		displaySearchResult(searchResult.toString());
 
 	} catch(e) {
-		console.log(chalk.bgRed.bold(`Could not find '${config.searchTerm}' in the branch ${config.currentBranch} within files of type ${config.fileExtension}`));
-		console.log('=======================================================================================');
+		// console.log(chalk.bgRed.bold(`Could not find '${config.searchTerm}' in the branch ${config.currentBranch} within files of type ${config.fileExtension}`));
+		// console.log('=======================================================================================');
 	}
 }
 
 function displaySearchResult(searchResult) {
-	console.log(chalk.bgYellow.black(`Search results found in branch ${config.currentBranch} within files of type ${config.fileExtension}`));
-
 	let lines = searchResult.trim().split("\n");
+	if(lines.length === 0) {
+		return;
+	}
+
+	let formattedCurrentBranch = chalk.black.italic(config.currentBranch);
+	let formattedFileExtension = chalk.black.italic(config.fileExtension);
+
+	console.log(chalk.bgYellow.black(`Search results found in ${formattedCurrentBranch}  within files of type ${formattedFileExtension}`));
+	
 	lines.forEach( line => {
 		let fileName = chalk.green.bold(line.split(":")[0]);
 		let lineNumber = chalk.yellow.bold(line.split(":")[1]);
