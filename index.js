@@ -7,9 +7,10 @@ const readline = require('readline');
 const execSync = require('child_process').execSync;
 const exec = require('child_process').exec;
 const chalk = require('chalk');
+const mkdirp = require('mkdirp');
 
 let config = {
-    'branchesTxtPath': `${process.env['HOME']}/.detective/branches.txt`,
+    'branchesTxtPath': `${process.env['HOME']}/.discod/branches.txt`,
     'branches': [],
     'currentBranch': '',
     'searchTerm': '',
@@ -18,27 +19,13 @@ let config = {
 
 function init() {
 
-	let firstParam = process.argv[2];
-	let secondParam = process.argv[3];
-
-	if(firstParam === undefined) {
-		printHelp();
+	setupBranchesTxt();
+	let continueToSearch = parseArgs();
+	if(continueToSearch === false) {
 		return;
-	} else {
-		if(firstParam === "--edit-list") {
-			editBranchesTxt();
-			return;
-		} else {
-			//it is a search term then
-			config.searchTerm = firstParam;
-		}
 	}
 
-	if(secondParam !== undefined) {
-		config.fileExtension = secondParam;
-	}
-
-    //If we are no ready for searching but first we have to do check up
+    //we are now ready for searching but first we have to do check up
     let goodToGo = doCheckup();
     if (goodToGo) {
         //parse branches.txt
@@ -46,6 +33,33 @@ function init() {
     }
 }
 
+function setupBranchesTxt() {
+	mkdirp.sync(`${process.env['HOME']}/.discod`);
+	execSync(`touch ${config.branchesTxtPath}`);
+}
+
+function parseArgs() {
+	let continueToSearch = false;
+	let firstParam = process.argv[2];
+	let secondParam = process.argv[3];
+
+	if(firstParam === undefined) {
+		printHelp() ;
+	} else {
+		if(firstParam === "--edit-list") {
+			editBranchesTxt();
+		} else {
+			//it is a search term then
+			config.searchTerm = firstParam;
+			continueToSearch = true;
+		}
+	}
+
+	if(secondParam !== undefined) {
+		config.fileExtension = secondParam;
+	}
+	return continueToSearch;
+}
 function doCheckup() {
 
 	//check that we have a searchterm in the config and does not contain a space
@@ -79,16 +93,21 @@ function parseBranchesTxt() {
     //call cb after the last line is read
     rl.on('close', () => {
     	rl = null;
+    	if(config.branches.length === 0) {
+    		console.log(chalk.bgRed.white.bold('You gotta have some branches to search in. Do discod --edit-list to update your branches list.'));
+    		return;
+    	}
     	doGitFetch();
     });
 }
 
 function doGitFetch() {
     try {
-    	execSync('git fetch');
+    	execSync('git fetch', {stdio: ['ignore', 'ignore', 'ignore']});
     	doGitCheckout();
     } catch( e ) {
-    	console.log(e);
+    	let errorMessage = getFormattedError(e);
+    	console.log(errorMessage);
     }
 }
 
@@ -96,11 +115,13 @@ function doGitCheckout() {
 
     for (let i = 0; i < config.branches.length; i++) {
         try {
-	        let result = execSync(`git checkout ${config.branches[i]}`);
+        	console.log('Switching to branch', chalk.bgWhite.bold.black(config.branches[i]));
+	        let result = execSync(`git checkout ${config.branches[i]}`, {stdio: ['ignore', 'ignore', 'ignore']});
 	        config.currentBranch = config.branches[i];
 	        doSearch();
         } catch( e ) {
-        	console.log(chalk.bgRed('Checkout Exception', e.message.trim()));
+        	let errorMessage = getFormattedError(e);
+        	console.log(errorMessage);
 			console.log('=======================================================================================');
         }
 
@@ -108,7 +129,7 @@ function doGitCheckout() {
 }
 
 function doSearch() {
-	let formattedSearchTerm = chalk.bgBlue.black(config.searchTerm);
+	let formattedSearchTerm = chalk.bgBlue.black.italic(config.searchTerm);
 	let formattedCurrentBranch = chalk.bgWhite.black(config.currentBranch);
 
 	console.log(`Searching for ${formattedSearchTerm} in branch ${formattedCurrentBranch}`);
@@ -119,13 +140,12 @@ function doSearch() {
 			searchCommand = `ag --${config.fileExtension} '${config.searchTerm}'`;
 		}
 
-		console.log(searchCommand);
 		let searchResult = execSync(searchCommand);
 
 		displaySearchResult(searchResult.toString());
 
 	} catch(e) {
-		console.log(chalk.bgRed(`Could not find '${config.searchTerm}' in the branch ${config.currentBranch} within files of type ${config.fileExtension}`));
+		console.log(chalk.bgRed.bold(`Could not find '${config.searchTerm}' in the branch ${config.currentBranch} within files of type ${config.fileExtension}`));
 		console.log('=======================================================================================');
 	}
 }
@@ -140,4 +160,9 @@ function displaySearchResult(searchResult) {
 		console.log(`${fileName} : ${lineNumber}`);
 	});
 }
+
+function getFormattedError(e) {
+	return chalk.bgRed(e.message.trim());
+}
+
 init();
