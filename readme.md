@@ -14,12 +14,16 @@ $ npm install -g discod
 ```
 ## Usage
 
-```sh
-discod searchTerm [fileExtension]
-```
+`discod` will start the search from the directory you run it from. Make sure you are in a repo that is not `dirty` i.e no uncommitted/unstashed changes.
+
 To edit the list of git branches to search through, run the following command
 ```sh
 discod --edit-list #this will open up a text file in your default editor
+```
+After updating your branch list run this inside the directory you want the search to start from.
+
+```sh
+discod searchTerm [fileExtension]
 ```
 
 ## License
