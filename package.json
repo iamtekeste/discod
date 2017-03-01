@@ -4,6 +4,7 @@
   "description": "Searches through a list of git branches given a search term",
   "main": "index.js",
   "scripts": {
+    "postinstall": "./postinstall.js",
     "test": "lol"
   },
   "bin": {
